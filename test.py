@@ -5,7 +5,7 @@ import urllib.request, urllib.parse, urllib.error, http.cookiejar
 HOST = sys.argv[1]                       # ex: https://zosmf.client.local
 USER = sys.argv[2]
 PWD  = getpass.getpass("Mot de passe : ")
-KW = KW = re.compile(
+KW = re.compile(
     # --- identifiants en clair ---
     r"PASS|PWD|PW=|SIGNON|USING|PHRASE\(|-u |PASSWORD\(|DATA\(PASSWORD|PWVIEW"
     # --- Top Secret : admin, privilèges, violations ---
@@ -59,11 +59,13 @@ names = [c.name for c in cj]
 print("[+] Cookies :", names, file=sys.stderr)
 if not names:
     sys.exit("[!] Aucun cookie de session recu - on arrete")
-
+STC_PREFIXES = ("IZU", "CEA", "CICS", "IHS", "HTTPD", "DB2", "IMS")
 q = urllib.parse.quote  # noms de jobs avec $, #, @
 jobs = json.loads(call("/zosmf/restjobs/jobs",
                        params={"owner": "*", "prefix": "*", "max-jobs": 5000}))
-print(f"[+] {len(jobs)} jobs visibles", file=sys.stderr)
+jobs = [j for j in jobs if j["jobname"].startswith(STC_PREFIXES)]
+print(f"[+] {len(jobs)} started tasks web retenues", file=sys.stderr)
+
 
 for j in jobs:
     base = f"/zosmf/restjobs/jobs/{q(j['jobname'])}/{q(j['jobid'])}"

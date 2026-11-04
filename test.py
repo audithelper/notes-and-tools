@@ -5,7 +5,23 @@ import urllib.request, urllib.parse, urllib.error, http.cookiejar
 HOST = sys.argv[1]                       # ex: https://zosmf.client.local
 USER = sys.argv[2]
 PWD  = getpass.getpass("Mot de passe : ")
-KW = re.compile(r"PASS|PWD|PW=|SIGNON|USING|PHRASE\(|-u |PASSWORD\(|SPECIAL|KEYRING|TOKEN", re.I)
+KW = KW = re.compile(
+    # --- identifiants en clair ---
+    r"PASS|PWD|PW=|SIGNON|USING|PHRASE\(|-u |PASSWORD\(|DATA\(PASSWORD|PWVIEW"
+    # --- Top Secret : admin, privilèges, violations ---
+    r"|TSS +(CRE|CREATE|ADD|REP|REPLACE|MODIFY|LIST|WHOHAS|WHOOWNS)\("
+    r"|\b(MSCA|SCA|ZCA|VCA|LSCA|DCA)\b"
+    r"|NODSNCHK|NORESCHK|NOVOLCHK|NOSUBCHK|NOLCFCHK|BYPASS|TSS7\d{3}E"
+    # --- keystores / keyrings / certificats ---
+    r"|KEYSTORE|KEYRING|TRUSTSTORE|\.p12\b|\.jks\b|\.kdb\b|\.racf\b|\.sth\b"
+    r"|SAFKEYRING|keyring:|CERTIFICATE|CERTAUTH|PERSONAL|KEYLABEL|KEYLAB"
+    # --- clés et jetons (forge de session) ---
+    r"|LTPA|ltpaKeys|JWT|jwtToken|jwk|SECRET|private[_ ]?key|BEGIN (RSA |EC )?PRIVATE"
+    # --- config TLS / Liberty / AT-TLS ---
+    r"|SSLCONFIG|AT-TLS|TLSV1|SSLV3|ENABLEDCIPHERS|sslProtocol|clientAuthentication"
+    r"|<ssl |<keyStore|<webAppSecurity|unauthenticatedUser|SAF(UNAUTH|CRED)"
+    # --- erreurs TLS/SAF souvent révélatrices ---
+    r"|CWPKI|CWWKS|CWWKO|SSL0|GSK_", re.I)
 
 # TLS sans vérification + gestion des cookies (jwtToken / LtpaToken2)
 ctx = ssl.create_default_context()
